@@ -10,7 +10,7 @@ PLAY_WIDTH, PLAY_HEIGHT = 10 * BLOCK_SIZE, 20 * BLOCK_SIZE
 TOP_LEFT_X, TOP_LEFT_Y = (SCREEN_WIDTH - PLAY_WIDTH) // 2, SCREEN_HEIGHT - PLAY_HEIGHT
 
 # Colores para las piezas
-COLORS = [(0, 255, 255), (255, 165, 0), (0, 0, 255), (255, 255, 0), (0, 255, 0), (255, 0, 0), (128, 0, 128)]
+COLORS = [(255, 165, 0), (0, 255, 255), (255, 0, 0), (0, 0, 255), (0, 255, 0), (128, 0, 255), (255, 255, 255)]  #CAMBIAR COLORES 
 
 # Figuras de Tetris
 SHAPES = [
@@ -210,5 +210,7 @@ def main():
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption('Tetris para Vicky')
+
+
 main()
 
