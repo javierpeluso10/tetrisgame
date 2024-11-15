@@ -115,18 +115,20 @@ def dibujar_grilla(superficie, grilla):
 
 def eliminar_linea_completa(grilla, locked):
     lineas_a_eliminar = 0
-    for y in range(len(grilla)-1, -1, -1):
+    for y in range(len(grilla)-1, -1, -1):  # Iterar desde abajo hacia arriba
         linea = grilla[y]
-        if (0, 0, 0) not in linea:
+        if (0, 0, 0) not in linea:  # Si no hay bloques vacíos en la fila
             lineas_a_eliminar += 1
+            # Eliminar las posiciones de la fila completa en `locked`
             for x in range(len(linea)):
-                del locked[(x, y)]
-            for pos in sorted(list(locked), key=lambda pos: pos[1])[::-1]:
+                if (x, y) in locked:  # Verificar antes de eliminar
+                    del locked[(x, y)]
+            # Mover las filas superiores hacia abajo
+            for pos in sorted(list(locked.keys()), key=lambda pos: pos[1], reverse=True):
                 x, pos_y = pos
-                if pos_y < y:
+                if pos_y < y:  # Solo mover las filas por encima de la eliminada
                     nueva_posicion = (x, pos_y + 1)
                     locked[nueva_posicion] = locked.pop(pos)
-
     return lineas_a_eliminar
 
 def renderizar_ventana_de_juego(superficie, grilla, puntaje=0):
