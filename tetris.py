@@ -102,8 +102,10 @@ def generar_texto_puntaje(text, size, color, surface):
 def dibujar_grilla(superficie, grilla):
     for y in range(len(grilla)):
         for x in range(len(grilla[y])):
-            pygame.draw.rect(superficie, grilla[y][x],
-                             (TOP_LEFT_X + x * TAMANO_BLOQUE, TOP_LEFT_Y + y * TAMANO_BLOQUE, TAMANO_BLOQUE, TAMANO_BLOQUE), 0)
+            if grilla[y][x] != (0, 0, 0):  # Solo dibuja si hay un bloque
+                bloque = pygame.Surface((TAMANO_BLOQUE, TAMANO_BLOQUE), pygame.SRCALPHA)  # Superficie con canal alfa
+                bloque.fill((*grilla[y][x], 150))  # Añadir opacidad (0-255, donde 255 es opaco)
+                superficie.blit(bloque, (TOP_LEFT_X + x * TAMANO_BLOQUE, TOP_LEFT_Y + y * TAMANO_BLOQUE))
 
     # Dibujar líneas de la cuadrícula
     for y in range(len(grilla)):
@@ -112,6 +114,7 @@ def dibujar_grilla(superficie, grilla):
         for x in range(len(grilla[y])):
             pygame.draw.line(superficie, (128, 128, 128), (TOP_LEFT_X + x * TAMANO_BLOQUE, TOP_LEFT_Y),
                              (TOP_LEFT_X + x * TAMANO_BLOQUE, TOP_LEFT_Y + ALTO_DE_JUEGO))
+
 
 def eliminar_linea_completa(grilla, locked):
     lineas_a_eliminar = 0
@@ -132,8 +135,8 @@ def eliminar_linea_completa(grilla, locked):
     return lineas_a_eliminar
 
 def renderizar_ventana_de_juego(superficie, grilla, puntaje=0):
-    superficie.fill((0, 0, 0))
-    dibujar_grilla(superficie, grilla)
+    superficie.blit(fondo, (0, 0))  # Fondo primero
+    dibujar_grilla(superficie, grilla)  # Luego cuadrícula
     generar_texto_puntaje(f'Puntaje: {puntaje}', 30, (255, 255, 255), superficie)
 
 def iniciar_juego():
@@ -213,6 +216,9 @@ def iniciar_juego():
 pantalla = pygame.display.set_mode((ANCHO_PANTALLA, ALTURA_PANTALLA))
 pygame.display.set_caption('Tetris para Vicky')
 
+
+fondo = pygame.image.load('C:/Users/Javier Peluso/Desktop/tetrisgame/img/mi_imagen.jpg')  # Reemplaza 'tu_imagen.jpg' por el nombre de tu archivo
+fondo = pygame.transform.scale(fondo, (ANCHO_PANTALLA, ALTURA_PANTALLA))
 
 iniciar_juego()
 
