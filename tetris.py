@@ -4,16 +4,16 @@ import random
 pygame.init()
 
 # Configuración de pantalla y colores
-SCREEN_WIDTH, SCREEN_HEIGHT = 300, 600
-BLOCK_SIZE = 30
-PLAY_WIDTH, PLAY_HEIGHT = 10 * BLOCK_SIZE, 20 * BLOCK_SIZE
-TOP_LEFT_X, TOP_LEFT_Y = (SCREEN_WIDTH - PLAY_WIDTH) // 2, SCREEN_HEIGHT - PLAY_HEIGHT
+ANCHO_PANTALLA, ALTURA_PANTALLA = 300, 600
+TAMANO_BLOQUE = 30
+ANCHO_DE_JUEGO, ALTO_DE_JUEGO = 10 * TAMANO_BLOQUE, 20 * TAMANO_BLOQUE
+TOP_LEFT_X, TOP_LEFT_Y = (ANCHO_PANTALLA - ANCHO_DE_JUEGO) // 2, ALTURA_PANTALLA - ALTO_DE_JUEGO
 
 # Colores para las piezas
-COLORS = [(255, 165, 0), (0, 255, 255), (255, 0, 0), (0, 0, 255), (0, 255, 0), (128, 0, 255), (255, 255, 255)]  #CAMBIAR COLORES 
+COLORES = [(255, 165, 0), (0, 255, 255), (255, 0, 0), (0, 0, 255), (0, 255, 0), (128, 0, 255), (255, 255, 255)]  #CAMBIAR COLORES 
 
 # Figuras de Tetris
-SHAPES = [
+PIEZAS = [
     # I
     [[[1, 1, 1, 1]], [[1], [1], [1], [1]]],
     
@@ -45,119 +45,119 @@ class Piece:
         self.x = x
         self.y = y
         self.shape = shape
-        self.color = random.choice(COLORS)
+        self.color = random.choice(COLORES)
         self.rotation = 0
 
-def create_grid(locked_positions={}):
-    grid = [[(0, 0, 0) for _ in range(10)] for _ in range(20)]
-    for y in range(len(grid)):
-        for x in range(len(grid[y])):
-            if (x, y) in locked_positions:
-                grid[y][x] = locked_positions[(x, y)]
-    return grid
+def crear_grilla(posiciones_bloqueadas={}):
+    grilla = [[(0, 0, 0) for _ in range(10)] for _ in range(20)]
+    for y in range(len(grilla)):
+        for x in range(len(grilla[y])):
+            if (x, y) in posiciones_bloqueadas:
+                grilla[y][x] = posiciones_bloqueadas[(x, y)]
+    return grilla
 
-def convert_shape_format(piece):
-    positions = []
-    shape_format = piece.shape[piece.rotation % len(piece.shape)]
+def celdas_ocupadas_en_tablero(pieza):
+    posiciones = []
+    shape_format = pieza.shape[pieza.rotation % len(pieza.shape)]
 
     for y, row in enumerate(shape_format):
         for x, cell in enumerate(row):
             if cell == 1:
-                positions.append((piece.x + x, piece.y + y))
+                posiciones.append((pieza.x + x, pieza.y + y))
 
-    return positions
+    return posiciones
 
-def valid_space(piece, grid):
-    accepted_positions = [[(x, y) for x in range(10) if grid[y][x] == (0, 0, 0)] for y in range(20)]
-    accepted_positions = [x for sub in accepted_positions for x in sub]
+#verifica si una pieza puede colocarse en el tablero sin que choque con otras piezas ni salga de los límites
+def espacio_valido_para_pieza(pieza, grilla):
+    posicion_valida = [[(x, y) for x in range(10) if grilla[y][x] == (0, 0, 0)] for y in range(20)]
+    posicion_valida = [x for sub in posicion_valida for x in sub]
 
-    formatted = convert_shape_format(piece)
+    formatted = celdas_ocupadas_en_tablero(pieza)
 
     for pos in formatted:
-        if pos not in accepted_positions:
+        if pos not in posicion_valida:
             if pos[1] >= 0:
                 return False
     return True
 
-def check_lost(positions):
+def chequear_game_over(positions):
     for pos in positions:
         x, y = pos
         if y < 1:
             return True
     return False
 
-def get_shape():
-    return Piece(5, 0, random.choice(SHAPES))
+def generar_nueva_pieza():
+    return Piece(5, 0, random.choice(PIEZAS))
 
-def draw_text_middle(text, size, color, surface):
+def generar_texto_puntaje(text, size, color, surface):
     font = pygame.font.Font(None, size)
     label = font.render(text, 1, color)
 
     surface.blit(label, (
-        TOP_LEFT_X + PLAY_WIDTH / 2 - (label.get_width() / 2),
-        TOP_LEFT_Y + PLAY_HEIGHT / 2 - (label.get_height() / 2)
+        TOP_LEFT_X + ANCHO_DE_JUEGO / 2 - (label.get_width() / 2),
+        TOP_LEFT_Y + ALTO_DE_JUEGO / 2 - (label.get_height() / 2)
     ))
 
-def draw_grid(surface, grid):
-    for y in range(len(grid)):
-        for x in range(len(grid[y])):
-            pygame.draw.rect(surface, grid[y][x],
-                             (TOP_LEFT_X + x * BLOCK_SIZE, TOP_LEFT_Y + y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE), 0)
+def dibujar_grilla(superficie, grilla):
+    for y in range(len(grilla)):
+        for x in range(len(grilla[y])):
+            pygame.draw.rect(superficie, grilla[y][x],
+                             (TOP_LEFT_X + x * TAMANO_BLOQUE, TOP_LEFT_Y + y * TAMANO_BLOQUE, TAMANO_BLOQUE, TAMANO_BLOQUE), 0)
 
     # Dibujar líneas de la cuadrícula
-    for y in range(len(grid)):
-        pygame.draw.line(surface, (128, 128, 128), (TOP_LEFT_X, TOP_LEFT_Y + y * BLOCK_SIZE),
-                         (TOP_LEFT_X + PLAY_WIDTH, TOP_LEFT_Y + y * BLOCK_SIZE))
-        for x in range(len(grid[y])):
-            pygame.draw.line(surface, (128, 128, 128), (TOP_LEFT_X + x * BLOCK_SIZE, TOP_LEFT_Y),
-                             (TOP_LEFT_X + x * BLOCK_SIZE, TOP_LEFT_Y + PLAY_HEIGHT))
+    for y in range(len(grilla)):
+        pygame.draw.line(superficie, (128, 128, 128), (TOP_LEFT_X, TOP_LEFT_Y + y * TAMANO_BLOQUE),
+                         (TOP_LEFT_X + ANCHO_DE_JUEGO, TOP_LEFT_Y + y * TAMANO_BLOQUE))
+        for x in range(len(grilla[y])):
+            pygame.draw.line(superficie, (128, 128, 128), (TOP_LEFT_X + x * TAMANO_BLOQUE, TOP_LEFT_Y),
+                             (TOP_LEFT_X + x * TAMANO_BLOQUE, TOP_LEFT_Y + ALTO_DE_JUEGO))
 
-def clear_rows(grid, locked):
-    rows_to_clear = 0
-    for y in range(len(grid)-1, -1, -1):
-        row = grid[y]
-        if (0, 0, 0) not in row:
-            rows_to_clear += 1
-            for x in range(len(row)):
+def eliminar_linea_completa(grilla, locked):
+    lineas_a_eliminar = 0
+    for y in range(len(grilla)-1, -1, -1):
+        linea = grilla[y]
+        if (0, 0, 0) not in linea:
+            lineas_a_eliminar += 1
+            for x in range(len(linea)):
                 del locked[(x, y)]
             for pos in sorted(list(locked), key=lambda pos: pos[1])[::-1]:
                 x, pos_y = pos
                 if pos_y < y:
-                    new_pos = (x, pos_y + 1)
-                    locked[new_pos] = locked.pop(pos)
+                    nueva_posicion = (x, pos_y + 1)
+                    locked[nueva_posicion] = locked.pop(pos)
 
-    return rows_to_clear
+    return lineas_a_eliminar
 
-def draw_window(surface, grid, score=0):
-    surface.fill((0, 0, 0))
-    draw_grid(surface, grid)
-    draw_text_middle(f'Puntaje: {score}', 30, (255, 255, 255), surface)
+def renderizar_ventana_de_juego(superficie, grilla, puntaje=0):
+    superficie.fill((0, 0, 0))
+    dibujar_grilla(superficie, grilla)
+    generar_texto_puntaje(f'Puntaje: {puntaje}', 30, (255, 255, 255), superficie)
 
-def main():
-    locked_positions = {}
-    grid = create_grid(locked_positions)
-
-    change_piece = False
+def iniciar_juego():
+    posiciones_bloqueadas = {}
+    grilla = crear_grilla(posiciones_bloqueadas)
+    cambio_de_pieza = False
     run = True
-    current_piece = get_shape()
-    next_piece = get_shape()
-    clock = pygame.time.Clock()
-    fall_time = 0
-    score = 0
-    fall_speed = 0.5
+    pieza_actual = generar_nueva_pieza()
+    pieza_siguiente = generar_nueva_pieza()
+    reloj = pygame.time.Clock()
+    tiempo_de_caida_de_pieza = 0
+    puntaje = 0
+    velocidad_de_caida_de_pieza = 0.5
 
     while run:
-        grid = create_grid(locked_positions)
-        fall_time += clock.get_rawtime()
-        clock.tick()
+        grilla = crear_grilla(posiciones_bloqueadas)
+        tiempo_de_caida_de_pieza += reloj.get_rawtime()
+        reloj.tick()
 
         # Velocidad de caída
-        if fall_time / 1000 >= fall_speed:
-            fall_time = 0
-            current_piece.y += 1
-            if not valid_space(current_piece, grid) and current_piece.y > 0:
-                current_piece.y -= 1
-                change_piece = True
+        if tiempo_de_caida_de_pieza / 1000 >= velocidad_de_caida_de_pieza:
+            tiempo_de_caida_de_pieza = 0
+            pieza_actual.y += 1
+            if not espacio_valido_para_pieza(pieza_actual, grilla) and pieza_actual.y > 0:
+                pieza_actual.y -= 1
+                cambio_de_pieza = True
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -167,50 +167,50 @@ def main():
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
-                    current_piece.x -= 1
-                    if not valid_space(current_piece, grid):
-                        current_piece.x += 1
+                    pieza_actual.x -= 1
+                if not espacio_valido_para_pieza(pieza_actual, grilla):
+                        pieza_actual.x += 1
                 if event.key == pygame.K_RIGHT:
-                    current_piece.x += 1
-                    if not valid_space(current_piece, grid):
-                        current_piece.x -= 1
+                    pieza_actual.x += 1
+                    if not espacio_valido_para_pieza(pieza_actual, grilla):
+                        pieza_actual.x -= 1
                 if event.key == pygame.K_DOWN:
-                    current_piece.y += 1
-                    if not valid_space(current_piece, grid):
-                        current_piece.y -= 1
+                    pieza_actual.y += 1
+                    if not espacio_valido_para_pieza(pieza_actual, grilla):
+                        pieza_actual.y -= 1
                 if event.key == pygame.K_UP:
-                    current_piece.rotation = (current_piece.rotation + 1) % len(current_piece.shape)
-                    if not valid_space(current_piece, grid):
-                        current_piece.rotation = (current_piece.rotation - 1) % len(current_piece.shape)
+                    pieza_actual.rotation = (pieza_actual.rotation + 1) % len(pieza_actual.shape)
+                    if not espacio_valido_para_pieza(pieza_actual, grilla):
+                        pieza_actual.rotation = (pieza_actual.rotation - 1) % len(pieza_actual.shape)
 
-        shape_pos = convert_shape_format(current_piece)
+        shape_pos = celdas_ocupadas_en_tablero(pieza_actual)
 
         for x, y in shape_pos:
             if y > -1:
-                grid[y][x] = current_piece.color
+                grilla[y][x] = pieza_actual.color
 
-        if change_piece:
+        if cambio_de_pieza:
             for pos in shape_pos:
                 p = (pos[0], pos[1])
-                locked_positions[p] = current_piece.color
-            current_piece = next_piece
-            next_piece = get_shape()
-            change_piece = False
-            score += clear_rows(grid, locked_positions) * 10
+                posiciones_bloqueadas[p] = pieza_actual.color
+            pieza_actual = pieza_siguiente
+            pieza_siguiente = generar_nueva_pieza()
+            cambio_de_pieza = False
+            puntaje += eliminar_linea_completa(grilla, posiciones_bloqueadas) * 10
 
-        draw_window(screen, grid, score)
+        renderizar_ventana_de_juego(pantalla, grilla, puntaje)
         pygame.display.update()
 
-        if check_lost(locked_positions):
+        if chequear_game_over(posiciones_bloqueadas):
             run = False
 
-    draw_text_middle("Game-Over", 40, (255, 255, 255), screen)
+    generar_texto_puntaje("Game-Over", 40, (255, 255, 255), pantalla)
     pygame.display.update()
     pygame.time.delay(2000)
 
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pantalla = pygame.display.set_mode((ANCHO_PANTALLA, ALTURA_PANTALLA))
 pygame.display.set_caption('Tetris para Vicky')
 
 
-main()
+iniciar_juego()
 
