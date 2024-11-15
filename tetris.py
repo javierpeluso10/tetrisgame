@@ -4,7 +4,7 @@ import random
 pygame.init()
 
 # Configuración de pantalla y colores
-ANCHO_PANTALLA, ALTURA_PANTALLA = 300, 600
+ANCHO_PANTALLA, ALTURA_PANTALLA = 600, 600
 TAMANO_BLOQUE = 30
 ANCHO_DE_JUEGO, ALTO_DE_JUEGO = 10 * TAMANO_BLOQUE, 20 * TAMANO_BLOQUE
 TOP_LEFT_X, TOP_LEFT_Y = (ANCHO_PANTALLA - ANCHO_DE_JUEGO) // 2, ALTURA_PANTALLA - ALTO_DE_JUEGO
@@ -134,10 +134,29 @@ def eliminar_linea_completa(grilla, locked):
                     locked[nueva_posicion] = locked.pop(pos)
     return lineas_a_eliminar
 
-def renderizar_ventana_de_juego(superficie, grilla, puntaje=0):
+def renderizar_ventana_de_juego(superficie, grilla, puntaje=0, proxima_pieza=None):
     superficie.blit(fondo, (0, 0))  # Fondo primero
     dibujar_grilla(superficie, grilla)  # Luego cuadrícula
     generar_texto_puntaje(f'Puntaje: {puntaje}', 30, (255, 255, 255), superficie)
+    dibujar_proxima_pieza(superficie, proxima_pieza)  # Dibujar la próxima pieza
+
+def dibujar_proxima_pieza(superficie, pieza):
+    # Tamaño de la zona para la próxima pieza
+    x_offset = 450  
+    y_offset = 20  
+
+    # Obtenemos la forma de la próxima pieza
+    shape_format = pieza.shape[pieza.rotation % len(pieza.shape)]
+    
+    # Dibujamos la próxima pieza
+    for y, row in enumerate(shape_format):
+        for x, cell in enumerate(row):
+            if cell == 1:
+                pygame.draw.rect(superficie, pieza.color,
+                                 (x_offset + x * TAMANO_BLOQUE, y_offset + y * TAMANO_BLOQUE, TAMANO_BLOQUE, TAMANO_BLOQUE))
+
+    # Dibujar un borde para la sección de la próxima pieza
+    pygame.draw.rect(superficie, (255, 255, 255), (x_offset - 5, y_offset - 5, 4 * TAMANO_BLOQUE + 10, 4 * TAMANO_BLOQUE + 10), 2)
 
 def iniciar_juego():
     posiciones_bloqueadas = {}
@@ -145,7 +164,7 @@ def iniciar_juego():
     cambio_de_pieza = False
     run = True
     pieza_actual = generar_nueva_pieza()
-    pieza_siguiente = generar_nueva_pieza()
+    pieza_siguiente = generar_nueva_pieza()  # La pieza siguiente
     reloj = pygame.time.Clock()
     tiempo_de_caida_de_pieza = 0
     puntaje = 0
@@ -199,11 +218,11 @@ def iniciar_juego():
                 p = (pos[0], pos[1])
                 posiciones_bloqueadas[p] = pieza_actual.color
             pieza_actual = pieza_siguiente
-            pieza_siguiente = generar_nueva_pieza()
+            pieza_siguiente = generar_nueva_pieza()  # Generar una nueva pieza
             cambio_de_pieza = False
             puntaje += eliminar_linea_completa(grilla, posiciones_bloqueadas) * 10
 
-        renderizar_ventana_de_juego(pantalla, grilla, puntaje)
+        renderizar_ventana_de_juego(pantalla, grilla, puntaje, pieza_siguiente)  # Pasar la próxima pieza
         pygame.display.update()
 
         if chequear_game_over(posiciones_bloqueadas):
@@ -221,4 +240,6 @@ fondo = pygame.image.load('C:/Users/Javier Peluso/Desktop/tetrisgame/img/mi_imag
 fondo = pygame.transform.scale(fondo, (ANCHO_PANTALLA, ALTURA_PANTALLA))
 
 iniciar_juego()
+
+
 
