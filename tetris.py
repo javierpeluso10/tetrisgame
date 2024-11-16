@@ -135,28 +135,46 @@ def eliminar_linea_completa(grilla, locked):
     return lineas_a_eliminar
 
 def renderizar_ventana_de_juego(superficie, grilla, puntaje=0, proxima_pieza=None):
-    superficie.blit(fondo, (0, 0))  # Fondo primero
-    dibujar_grilla(superficie, grilla)  # Luego cuadrícula
+    superficie.fill((0, 0, 0))
+    superficie.blit(fondo, (TOP_LEFT_X, TOP_LEFT_Y))
+    dibujar_grilla(superficie, grilla)
     generar_texto_puntaje(f'Puntaje: {puntaje}', 30, (255, 255, 255), superficie)
-    dibujar_proxima_pieza(superficie, proxima_pieza)  # Dibujar la próxima pieza
+    dibujar_proxima_pieza(superficie, proxima_pieza)
 
 def dibujar_proxima_pieza(superficie, pieza):
     # Tamaño de la zona para la próxima pieza
-    x_offset = 450  
-    y_offset = 20  
+    x_offset = 460
+    y_offset = 40
+    zona_ancho = 4 * TAMANO_BLOQUE
+    zona_alto = 4 * TAMANO_BLOQUE
 
-    # Obtenemos la forma de la próxima pieza
+    # Dibujar el texto "Próxima Pieza"
+    font = pygame.font.Font(None, 25)
+    texto = font.render("Próxima Pieza", True, (255, 255, 255))
+    superficie.blit(texto, (x_offset, y_offset - 30))  # Texto sobre el recuadro
+
+    # Obtener la forma de la pieza
     shape_format = pieza.shape[pieza.rotation % len(pieza.shape)]
-    
-    # Dibujamos la próxima pieza
+
+    # Calcular tamaño real de la pieza
+    pieza_ancho = len(shape_format[0]) * TAMANO_BLOQUE
+    pieza_alto = len(shape_format) * TAMANO_BLOQUE
+
+    # Calcular posición centrada dentro de la zona
+    x_centrado = x_offset + (zona_ancho - pieza_ancho) // 2
+    y_centrado = y_offset + (zona_alto - pieza_alto) // 2
+
+    # Dibujar la pieza centrada
     for y, row in enumerate(shape_format):
         for x, cell in enumerate(row):
             if cell == 1:
-                pygame.draw.rect(superficie, pieza.color,
-                                 (x_offset + x * TAMANO_BLOQUE, y_offset + y * TAMANO_BLOQUE, TAMANO_BLOQUE, TAMANO_BLOQUE))
+                pygame.draw.rect(
+                    superficie, pieza.color,
+                    (x_centrado + x * TAMANO_BLOQUE, y_centrado + y * TAMANO_BLOQUE, TAMANO_BLOQUE, TAMANO_BLOQUE)
+                )
 
     # Dibujar un borde para la sección de la próxima pieza
-    pygame.draw.rect(superficie, (255, 255, 255), (x_offset - 5, y_offset - 5, 4 * TAMANO_BLOQUE + 10, 4 * TAMANO_BLOQUE + 10), 2)
+    pygame.draw.rect(superficie, (255, 255, 255), (x_offset, y_offset, zona_ancho, zona_alto), 2)
 
 def iniciar_juego():
     posiciones_bloqueadas = {}
@@ -233,11 +251,11 @@ def iniciar_juego():
     pygame.time.delay(2000)
 
 pantalla = pygame.display.set_mode((ANCHO_PANTALLA, ALTURA_PANTALLA))
-pygame.display.set_caption('Tetris para Vicky')
+pygame.display.set_caption('Vitris')
 
 
-fondo = pygame.image.load('C:/Users/Javier Peluso/Desktop/tetrisgame/img/mi_imagen.jpg')  # Reemplaza 'tu_imagen.jpg' por el nombre de tu archivo
-fondo = pygame.transform.scale(fondo, (ANCHO_PANTALLA, ALTURA_PANTALLA))
+fondo = pygame.image.load('C:/Users/Javee/OneDrive/Escritorio/tetrisgame/img/mi_imagen.jpg')  # Reemplaza 'tu_imagen.jpg' por el nombre de tu archivo
+fondo = pygame.transform.scale(fondo, (ANCHO_DE_JUEGO, ALTO_DE_JUEGO))
 
 iniciar_juego()
 
