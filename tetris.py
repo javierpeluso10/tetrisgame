@@ -88,8 +88,8 @@ def chequear_game_over(positions):
     return False
 
 def generar_nueva_pieza():
-    return Piece(5, 0, [[[1, 1], [1, 1]]]) # /// SIEMPRE CUADRADO PARA DESARROLLO
-    #return Piece(5, 0, random.choice(PIEZAS))  /// PIEZAS RANDOM
+    #return Piece(5, 0, [[[1, 1], [1, 1]]]) # /// SIEMPRE CUADRADO PARA DESARROLLO
+    return Piece(5, 0, random.choice(PIEZAS))  #/// PIEZAS RANDOM
 
 def generar_texto_puntaje(text, size, color, surface, x, y):
     font = pygame.font.Font(None, size)
@@ -149,11 +149,11 @@ def eliminar_linea_completa(grilla, locked):
 
     return lineas_a_eliminar
 
-
-
-
-
-
+def calcular_velocidad_caida(puntaje):
+    # Esto ajusta la velocidad de caída: por cada 100 puntos, la velocidad disminuye.
+    # Ajusta los valores según lo que consideres adecuado para la jugabilidad.
+    velocidad = 0.5 - (puntaje // 70) * 0.05
+    return max(0.1, velocidad)  # La velocidad no puede ser menor a 0.1
 
 
 def renderizar_ventana_de_juego(superficie, grilla, puntaje=0, proxima_pieza=None):
@@ -249,7 +249,9 @@ def iniciar_juego():
                         pieza_actual.y -= 1  # Coloca la pieza en la última posición válida antes de que haya colisión
 
         if not pausado:  # Actualizaciones del juego solo si no está pausado
-            # Velocidad de caída
+            velocidad_de_caida_de_pieza = calcular_velocidad_caida(puntaje)
+
+
             if tiempo_de_caida_de_pieza / 1000 >= velocidad_de_caida_de_pieza:
                 tiempo_de_caida_de_pieza = 0
                 pieza_actual.y += 1
@@ -297,6 +299,7 @@ fondo = pygame.image.load('C:/Users/Javee/OneDrive/Escritorio/tetrisgame/img/mi_
 fondo = pygame.transform.scale(fondo, (ANCHO_DE_JUEGO, ALTO_DE_JUEGO))
 
 iniciar_juego()
+
 
 
 
