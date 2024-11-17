@@ -48,6 +48,27 @@ class Piece:
         self.color = random.choice(COLORES)
         self.rotation = 0
 
+def mostrar_menu_inicial(superficie):
+    while True:
+        superficie.fill((0, 0, 0))
+        generar_texto_puntaje("Vitris", 60, (255, 255, 255), superficie, ANCHO_PANTALLA // 2 - 80, 100)
+        generar_texto_puntaje("Controles:", 40, (255, 255, 255), superficie, ANCHO_PANTALLA // 2 - 90, 200)
+        generar_texto_puntaje("Flechas: Mover la pieza", 30, (255, 255, 255), superficie, ANCHO_PANTALLA // 2 - 150, 250)
+        generar_texto_puntaje("Flecha Arriba: Rotar la pieza", 30, (255, 255, 255), superficie, ANCHO_PANTALLA // 2 - 150, 300)
+        generar_texto_puntaje("Flecha Abajo: Acelerar la caída", 30, (255, 255, 255), superficie, ANCHO_PANTALLA // 2 - 150, 350)
+        generar_texto_puntaje("Espacio: Caída directa", 30, (255, 255, 255), superficie, ANCHO_PANTALLA // 2 - 150, 400)
+        generar_texto_puntaje("P: Pausar / Reanudar", 30, (255, 255, 255), superficie, ANCHO_PANTALLA // 2 - 150, 450)
+        generar_texto_puntaje("Presiona cualquier tecla para comenzar", 30, (255, 255, 255), superficie, ANCHO_PANTALLA // 2 - 180, 550)
+        pygame.display.update()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == pygame.KEYDOWN:  # Cualquier tecla para continuar
+                return
+
+
 def crear_grilla(posiciones_bloqueadas={}):
     grilla = [[(0, 0, 0) for _ in range(10)] for _ in range(20)]
     for y in range(len(grilla)):
@@ -100,9 +121,11 @@ def dibujar_grilla(superficie, grilla):
     for y in range(len(grilla)):
         for x in range(len(grilla[y])):
             if grilla[y][x] != (0, 0, 0):  # Solo dibuja si hay un bloque
-                bloque = pygame.Surface((TAMANO_BLOQUE, TAMANO_BLOQUE), pygame.SRCALPHA)  # Superficie con canal alfa
-                bloque.fill((*grilla[y][x], 150))  # Añadir opacidad (0-255, donde 255 es opaco)
-                superficie.blit(bloque, (TOP_LEFT_X + x * TAMANO_BLOQUE, TOP_LEFT_Y + y * TAMANO_BLOQUE))
+                pygame.draw.rect(
+                    superficie, 
+                    grilla[y][x],  # Color sólido
+                    (TOP_LEFT_X + x * TAMANO_BLOQUE, TOP_LEFT_Y + y * TAMANO_BLOQUE, TAMANO_BLOQUE, TAMANO_BLOQUE)
+                )
 
     # Dibujar líneas de la cuadrícula
     for y in range(len(grilla)):
@@ -111,6 +134,7 @@ def dibujar_grilla(superficie, grilla):
         for x in range(len(grilla[y])):
             pygame.draw.line(superficie, (128, 128, 128), (TOP_LEFT_X + x * TAMANO_BLOQUE, TOP_LEFT_Y),
                              (TOP_LEFT_X + x * TAMANO_BLOQUE, TOP_LEFT_Y + ALTO_DE_JUEGO))
+
 
 def eliminar_linea_completa(grilla, locked):
     lineas_a_eliminar = 0
@@ -285,11 +309,31 @@ def iniciar_juego():
         pygame.display.update()
 
         if not pausado and chequear_game_over(posiciones_bloqueadas):
-            run = False
+            mostrar_menu_game_over()
+            break
 
-    generar_texto_puntaje("Game Over", 40, (255, 255, 255), pantalla)
+def reiniciar_juego():
+    iniciar_juego()
+
+def mostrar_menu_game_over():
+    pantalla.fill((0, 0, 0))
+    generar_texto_puntaje("Game Over", 50, (255, 255, 255), pantalla, ANCHO_PANTALLA // 2 - 100, ALTURA_PANTALLA // 2 - 80)
+    generar_texto_puntaje("Presiona R para reiniciar", 30, (255, 255, 255), pantalla, ANCHO_PANTALLA // 2 - 130, ALTURA_PANTALLA // 2)
+    generar_texto_puntaje("Presiona Q para salir", 30, (255, 255, 255), pantalla, ANCHO_PANTALLA // 2 - 110, ALTURA_PANTALLA // 2 + 40)
     pygame.display.update()
-    pygame.time.delay(2000)
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:  # Reiniciar juego
+                    reiniciar_juego()
+                    return  # Salir del bucle y reiniciar
+                if event.key == pygame.K_q:  # Salir del juego
+                    pygame.quit()
+                    quit()
 
 pantalla = pygame.display.set_mode((ANCHO_PANTALLA, ALTURA_PANTALLA))
 pygame.display.set_caption('Vitris')
@@ -298,6 +342,7 @@ pygame.display.set_caption('Vitris')
 fondo = pygame.image.load('C:/Users/Javee/OneDrive/Escritorio/tetrisgame/img/mi_imagen.jpg')  
 fondo = pygame.transform.scale(fondo, (ANCHO_DE_JUEGO, ALTO_DE_JUEGO))
 
+mostrar_menu_inicial(pantalla)
 iniciar_juego()
 
 
