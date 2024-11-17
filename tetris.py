@@ -112,24 +112,47 @@ def dibujar_grilla(superficie, grilla):
             pygame.draw.line(superficie, (128, 128, 128), (TOP_LEFT_X + x * TAMANO_BLOQUE, TOP_LEFT_Y),
                              (TOP_LEFT_X + x * TAMANO_BLOQUE, TOP_LEFT_Y + ALTO_DE_JUEGO))
 
-
 def eliminar_linea_completa(grilla, locked):
     lineas_a_eliminar = 0
-    # Iterar desde abajo hacia arriba
+    filas_completas = []  # Para guardar las filas completas
+
+    # Detectamos todas las filas completas
     for y in range(len(grilla) - 1, -1, -1):
         if (0, 0, 0) not in grilla[y]:  # Si no hay bloques vacíos en la fila
-            lineas_a_eliminar += 1
-            # Eliminar todas las posiciones de la fila en `locked`
+            filas_completas.append(y)  # Agregamos la fila completa a la lista
+
+    # Si hay filas completas
+    if filas_completas:
+        lineas_a_eliminar = len(filas_completas)
+
+        # Eliminar todas las posiciones de las filas completas en `locked`
+        for y in filas_completas:
             for x in range(len(grilla[y])):
                 if (x, y) in locked:
-                    del locked[(x, y)]
-            # Recalcular posiciones de las filas superiores
-            for pos in sorted(locked, key=lambda p: p[1], reverse=True):
-                x, y_pos = pos
-                if y_pos < y:  # Si la fila está por encima de la eliminada
-                    nueva_posicion = (x, y_pos + 1)
-                    locked[nueva_posicion] = locked.pop(pos)
+                    del locked[(x, y)]  # Borrar las posiciones bloqueadas de la fila
+
+        # Desplazamos las filas superiores hacia abajo
+        for pos in list(locked.keys()):
+            x, y_pos = pos
+            # Si la fila está por encima de la última fila eliminada
+            if y_pos < filas_completas[0]:
+                nueva_posicion = (x, y_pos + lineas_a_eliminar)  # Mover hacia abajo
+                locked[nueva_posicion] = locked.pop(pos)
+
+        # Mover las filas en la grilla
+        for i in range(filas_completas[0], 0, -1):
+            grilla[i] = grilla[i - lineas_a_eliminar][:]  # Copiar las filas superiores hacia abajo
+
+        # Limpiar las primeras `lineas_a_eliminar` filas en la grilla
+        for i in range(lineas_a_eliminar):
+            grilla[i] = [(0, 0, 0) for _ in range(10)]  # Limpiar las filas superiores
+
     return lineas_a_eliminar
+
+
+
+
+
 
 
 
