@@ -88,16 +88,13 @@ def chequear_game_over(positions):
     return False
 
 def generar_nueva_pieza():
-    return Piece(5, 0, random.choice(PIEZAS))
+    return Piece(5, 0, [[[1, 1], [1, 1]]]) # /// SIEMPRE CUADRADO PARA DESARROLLO
+    #return Piece(5, 0, random.choice(PIEZAS))  /// PIEZAS RANDOM
 
-def generar_texto_puntaje(text, size, color, surface):
+def generar_texto_puntaje(text, size, color, surface, x, y):
     font = pygame.font.Font(None, size)
     label = font.render(text, 1, color)
-
-    surface.blit(label, (
-        TOP_LEFT_X + ANCHO_DE_JUEGO / 2 - (label.get_width() / 2),
-        TOP_LEFT_Y + ALTO_DE_JUEGO / 2 - (label.get_height() / 2)
-    ))
+    surface.blit(label, (x, y))
 
 def dibujar_grilla(superficie, grilla):
     for y in range(len(grilla)):
@@ -118,27 +115,29 @@ def dibujar_grilla(superficie, grilla):
 
 def eliminar_linea_completa(grilla, locked):
     lineas_a_eliminar = 0
-    for y in range(len(grilla)-1, -1, -1):  # Iterar desde abajo hacia arriba
-        linea = grilla[y]
-        if (0, 0, 0) not in linea:  # Si no hay bloques vacíos en la fila
+    # Iterar desde abajo hacia arriba
+    for y in range(len(grilla) - 1, -1, -1):
+        if (0, 0, 0) not in grilla[y]:  # Si no hay bloques vacíos en la fila
             lineas_a_eliminar += 1
-            # Eliminar las posiciones de la fila completa en `locked`
-            for x in range(len(linea)):
-                if (x, y) in locked:  # Verificar antes de eliminar
+            # Eliminar todas las posiciones de la fila en `locked`
+            for x in range(len(grilla[y])):
+                if (x, y) in locked:
                     del locked[(x, y)]
-            # Mover las filas superiores hacia abajo
-            for pos in sorted(list(locked.keys()), key=lambda pos: pos[1], reverse=True):
-                x, pos_y = pos
-                if pos_y < y:  # Solo mover las filas por encima de la eliminada
-                    nueva_posicion = (x, pos_y + 1)
+            # Recalcular posiciones de las filas superiores
+            for pos in sorted(locked, key=lambda p: p[1], reverse=True):
+                x, y_pos = pos
+                if y_pos < y:  # Si la fila está por encima de la eliminada
+                    nueva_posicion = (x, y_pos + 1)
                     locked[nueva_posicion] = locked.pop(pos)
     return lineas_a_eliminar
+
+
 
 def renderizar_ventana_de_juego(superficie, grilla, puntaje=0, proxima_pieza=None):
     superficie.fill((0, 0, 0))
     superficie.blit(fondo, (TOP_LEFT_X, TOP_LEFT_Y))
     dibujar_grilla(superficie, grilla)
-    generar_texto_puntaje(f'Puntaje: {puntaje}', 30, (255, 255, 255), superficie)
+    generar_texto_puntaje(f'Puntaje: {puntaje}', 30, (255, 255, 255), superficie, 20, 20)
     dibujar_proxima_pieza(superficie, proxima_pieza)
 
 def dibujar_proxima_pieza(superficie, pieza):
@@ -181,6 +180,7 @@ def iniciar_juego():
     grilla = crear_grilla(posiciones_bloqueadas)
     cambio_de_pieza = False
     run = True
+    pausado = False  # Estado de pausa
     pieza_actual = generar_nueva_pieza()
     pieza_siguiente = generar_nueva_pieza()  # La pieza siguiente
     reloj = pygame.time.Clock()
@@ -193,14 +193,6 @@ def iniciar_juego():
         tiempo_de_caida_de_pieza += reloj.get_rawtime()
         reloj.tick()
 
-        # Velocidad de caída
-        if tiempo_de_caida_de_pieza / 1000 >= velocidad_de_caida_de_pieza:
-            tiempo_de_caida_de_pieza = 0
-            pieza_actual.y += 1
-            if not espacio_valido_para_pieza(pieza_actual, grilla) and pieza_actual.y > 0:
-                pieza_actual.y -= 1
-                cambio_de_pieza = True
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
@@ -208,45 +200,65 @@ def iniciar_juego():
                 quit()
 
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    pieza_actual.x -= 1
-                if not espacio_valido_para_pieza(pieza_actual, grilla):
-                        pieza_actual.x += 1
-                if event.key == pygame.K_RIGHT:
-                    pieza_actual.x += 1
-                    if not espacio_valido_para_pieza(pieza_actual, grilla):
+                if event.key == pygame.K_p:  # Tecla para pausar
+                    pausado = not pausado
+
+                if not pausado:  # Solo permite movimiento si no está pausado
+                    if event.key == pygame.K_LEFT:
                         pieza_actual.x -= 1
-                if event.key == pygame.K_DOWN:
-                    pieza_actual.y += 1
-                    if not espacio_valido_para_pieza(pieza_actual, grilla):
-                        pieza_actual.y -= 1
-                if event.key == pygame.K_UP:
-                    pieza_actual.rotation = (pieza_actual.rotation + 1) % len(pieza_actual.shape)
-                    if not espacio_valido_para_pieza(pieza_actual, grilla):
-                        pieza_actual.rotation = (pieza_actual.rotation - 1) % len(pieza_actual.shape)
+                        if not espacio_valido_para_pieza(pieza_actual, grilla):
+                            pieza_actual.x += 1
+                    if event.key == pygame.K_RIGHT:
+                        pieza_actual.x += 1
+                        if not espacio_valido_para_pieza(pieza_actual, grilla):
+                            pieza_actual.x -= 1
+                    if event.key == pygame.K_DOWN:
+                        pieza_actual.y += 1
+                        if not espacio_valido_para_pieza(pieza_actual, grilla):
+                            pieza_actual.y -= 1
+                    if event.key == pygame.K_UP:
+                        pieza_actual.rotation = (pieza_actual.rotation + 1) % len(pieza_actual.shape)
+                        if not espacio_valido_para_pieza(pieza_actual, grilla):
+                            pieza_actual.rotation = (pieza_actual.rotation - 1) % len(pieza_actual.shape)
 
-        shape_pos = celdas_ocupadas_en_tablero(pieza_actual)
+        if not pausado:  # Actualizaciones del juego solo si no está pausado
+            # Velocidad de caída
+            if tiempo_de_caida_de_pieza / 1000 >= velocidad_de_caida_de_pieza:
+                tiempo_de_caida_de_pieza = 0
+                pieza_actual.y += 1
+                if not espacio_valido_para_pieza(pieza_actual, grilla) and pieza_actual.y > 0:
+                    pieza_actual.y -= 1
+                    cambio_de_pieza = True
 
-        for x, y in shape_pos:
-            if y > -1:
-                grilla[y][x] = pieza_actual.color
+            shape_pos = celdas_ocupadas_en_tablero(pieza_actual)
 
-        if cambio_de_pieza:
-            for pos in shape_pos:
-                p = (pos[0], pos[1])
-                posiciones_bloqueadas[p] = pieza_actual.color
-            pieza_actual = pieza_siguiente
-            pieza_siguiente = generar_nueva_pieza()  # Generar una nueva pieza
-            cambio_de_pieza = False
-            puntaje += eliminar_linea_completa(grilla, posiciones_bloqueadas) * 10
+            for x, y in shape_pos:
+                if y > -1:
+                    grilla[y][x] = pieza_actual.color
 
+            if cambio_de_pieza:
+                for pos in shape_pos:
+                    p = (pos[0], pos[1])
+                    posiciones_bloqueadas[p] = pieza_actual.color
+                pieza_actual = pieza_siguiente
+                pieza_siguiente = generar_nueva_pieza()  # Generar una nueva pieza
+                cambio_de_pieza = False
+                puntaje += eliminar_linea_completa(grilla, posiciones_bloqueadas) * 10
+
+        # Renderizar ventana de juego
         renderizar_ventana_de_juego(pantalla, grilla, puntaje, pieza_siguiente)  # Pasar la próxima pieza
+
+        if pausado:
+            pantalla.fill((0, 0, 0)) #Oscurece toda la pantalla a la hora de poner pausa
+            generar_texto_puntaje("Juego en Pausa", 40, (255, 255, 255), pantalla, 
+                      ANCHO_PANTALLA // 2 - 100, ALTURA_PANTALLA // 2 - 20)
+
         pygame.display.update()
 
-        if chequear_game_over(posiciones_bloqueadas):
+        if not pausado and chequear_game_over(posiciones_bloqueadas):
             run = False
 
-    generar_texto_puntaje("Game-Over", 40, (255, 255, 255), pantalla)
+    generar_texto_puntaje("Game Over", 40, (255, 255, 255), pantalla)
     pygame.display.update()
     pygame.time.delay(2000)
 
@@ -254,7 +266,7 @@ pantalla = pygame.display.set_mode((ANCHO_PANTALLA, ALTURA_PANTALLA))
 pygame.display.set_caption('Vitris')
 
 
-fondo = pygame.image.load('C:/Users/Javee/OneDrive/Escritorio/tetrisgame/img/mi_imagen.jpg')  # Reemplaza 'tu_imagen.jpg' por el nombre de tu archivo
+fondo = pygame.image.load('C:/Users/Javee/OneDrive/Escritorio/tetrisgame/img/mi_imagen.jpg')  
 fondo = pygame.transform.scale(fondo, (ANCHO_DE_JUEGO, ALTO_DE_JUEGO))
 
 iniciar_juego()
