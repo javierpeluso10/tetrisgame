@@ -243,6 +243,10 @@ def iniciar_juego():
                         pieza_actual.rotation = (pieza_actual.rotation + 1) % len(pieza_actual.shape)
                         if not espacio_valido_para_pieza(pieza_actual, grilla):
                             pieza_actual.rotation = (pieza_actual.rotation - 1) % len(pieza_actual.shape)
+                    if event.key == pygame.K_SPACE:  # Tecla para hacer que la pieza baje directamente
+                        while espacio_valido_para_pieza(pieza_actual, grilla):
+                            pieza_actual.y += 1
+                        pieza_actual.y -= 1  # Coloca la pieza en la última posición válida antes de que haya colisión
 
         if not pausado:  # Actualizaciones del juego solo si no está pausado
             # Velocidad de caída
@@ -272,8 +276,8 @@ def iniciar_juego():
         renderizar_ventana_de_juego(pantalla, grilla, puntaje, pieza_siguiente)  # Pasar la próxima pieza
 
         if pausado:
-            pantalla.fill((0, 0, 0)) #Oscurece toda la pantalla a la hora de poner pausa
-            generar_texto_puntaje("Juego en Pausa", 40, (255, 255, 255), pantalla, 
+            pantalla.fill((0, 0, 0))  # Oscurece toda la pantalla a la hora de poner pausa
+            generar_texto_puntaje("Juego en Pausa", 40, (255, 255, 255), pantalla,
                       ANCHO_PANTALLA // 2 - 100, ALTURA_PANTALLA // 2 - 20)
 
         pygame.display.update()
