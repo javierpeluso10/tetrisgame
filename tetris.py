@@ -77,13 +77,16 @@ def iniciar_juego():
     grilla = crear_grilla(posiciones_bloqueadas)
     cambio_de_pieza = False
     run = True
-    pausado = False  # Estado de pausa
+    pausado = False
     pieza_actual = generar_nueva_pieza()
-    pieza_siguiente = generar_nueva_pieza()  # La pieza siguiente
+    pieza_siguiente = generar_nueva_pieza()
     reloj = pygame.time.Clock()
     tiempo_de_caida_de_pieza = 0
     puntaje = 0
     velocidad_de_caida_de_pieza = 0.5
+
+    # Cargar el puntaje más alto al inicio
+    puntaje_alto = cargar_puntaje_alto()
 
     while run:
         grilla = crear_grilla(posiciones_bloqueadas)
@@ -97,10 +100,10 @@ def iniciar_juego():
                 sys.exit()
 
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_p:  # Tecla para pausar
+                if event.key == pygame.K_p:
                     pausado = not pausado
 
-                if not pausado:  # Solo permite movimiento si no está pausado
+                if not pausado:
                     if event.key == pygame.K_LEFT:
                         pieza_actual.x -= 1
                         if not espacio_valido_para_pieza(pieza_actual, grilla):
@@ -119,14 +122,13 @@ def iniciar_juego():
                             pieza_actual.rotation = (pieza_actual.rotation - 1) % len(pieza_actual.shape)
                         else:
                             rotate_sound.play()    
-                    if event.key == pygame.K_SPACE:  # Tecla para hacer que la pieza baje directamente
+                    if event.key == pygame.K_SPACE:
                         while espacio_valido_para_pieza(pieza_actual, grilla):
                             pieza_actual.y += 1
-                        pieza_actual.y -= 1  # Coloca la pieza en la última posición válida antes de que haya colisión
+                        pieza_actual.y -= 1  # Coloca la pieza en la última posición válida
 
-        if not pausado:  # Actualizaciones del juego solo si no está pausado
+        if not pausado:
             velocidad_de_caida_de_pieza = calcular_velocidad_caida(puntaje)
-
 
             if tiempo_de_caida_de_pieza / 1000 >= velocidad_de_caida_de_pieza:
                 tiempo_de_caida_de_pieza = 0
@@ -146,23 +148,27 @@ def iniciar_juego():
                     p = (pos[0], pos[1])
                     posiciones_bloqueadas[p] = pieza_actual.color
                 pieza_actual = pieza_siguiente
-                pieza_siguiente = generar_nueva_pieza()  # Generar una nueva pieza
+                pieza_siguiente = generar_nueva_pieza()
                 cambio_de_pieza = False
                 puntaje += eliminar_linea_completa(grilla, posiciones_bloqueadas) * 10
 
-        # Renderizar ventana de juego
-        renderizar_ventana_de_juego(pantalla, grilla, puntaje, pieza_siguiente)  # Pasar la próxima pieza
+                # Actualiza el puntaje más alto
+                if puntaje > puntaje_alto:
+                    puntaje_alto = puntaje
+                    guardar_puntaje_alto(puntaje_alto)
+
+        renderizar_ventana_de_juego(pantalla, grilla, puntaje, pieza_siguiente, puntaje_alto)
 
         if pausado:
-            pantalla.fill((0, 0, 0))  # Oscurece toda la pantalla a la hora de poner pausa
-            generar_texto_puntaje("Juego en Pausa", 40, (255, 255, 255), pantalla,
-                      ANCHO_PANTALLA // 2 - 100, ALTURA_PANTALLA // 2 - 20)
+            pantalla.fill((0, 0, 0))
+            generar_texto_puntaje("Juego en Pausa", 40, (255, 255, 255), pantalla, ANCHO_PANTALLA // 2 - 100, ALTURA_PANTALLA // 2 - 20)
 
         pygame.display.update()
 
         if not pausado and chequear_game_over(posiciones_bloqueadas):
-            mostrar_menu_game_over()
+            mostrar_menu_game_over(puntaje, puntaje_alto)
             break
+
 
 def mostrar_menu_inicial(superficie):
     while True:
@@ -298,12 +304,18 @@ def calcular_velocidad_caida(puntaje):
     return max(0.1, velocidad)  # La velocidad no puede ser menor a 0.1
 
 
-def renderizar_ventana_de_juego(superficie, grilla, puntaje=0, proxima_pieza=None):
+def renderizar_ventana_de_juego(superficie, grilla, puntaje=0, proxima_pieza=None, puntaje_alto=0):
     superficie.fill((0, 0, 0))
     superficie.blit(fondo, (TOP_LEFT_X, TOP_LEFT_Y))
     dibujar_grilla(superficie, grilla)
-    generar_texto_puntaje(f'Puntaje: {puntaje}', 30, (255, 255, 255), superficie, 20, 20)
+    generar_texto_puntaje(f'Puntos: {puntaje}', 30, (255, 255, 255), superficie, 5, 20)
+    
+    # Mostrar el puntaje más alto
+    generar_texto_puntaje(f'Highscore: {puntaje_alto}', 30, (255, 255, 255), superficie, 5, 60)
+    
     dibujar_proxima_pieza(superficie, proxima_pieza)
+
+    
 
 def dibujar_proxima_pieza(superficie, pieza):
     # Tamaño de la zona para la próxima pieza
@@ -340,18 +352,35 @@ def dibujar_proxima_pieza(superficie, pieza):
     # Dibujar un borde para la sección de la próxima pieza
     pygame.draw.rect(superficie, (255, 255, 255), (x_offset, y_offset, zona_ancho, zona_alto), 2)
 
+def cargar_puntaje_alto():
+    try:
+        with open("puntaje_alto.txt", "r") as archivo:
+            return int(archivo.read())
+    except (FileNotFoundError, ValueError):
+        return 0  # Si no existe el archivo o está vacío, la puntuación más alta es 0
 
-
+def guardar_puntaje_alto(puntaje_alto):
+    with open("puntaje_alto.txt", "w") as archivo:
+        archivo.write(str(puntaje_alto))
 
 
 def reiniciar_juego():
     iniciar_juego()
 
-def mostrar_menu_game_over():
+def mostrar_menu_game_over(puntaje, puntaje_alto):
+    # Rellenar la pantalla de negro
     pantalla.fill((0, 0, 0))
+    # Mostrar el título de Game Over
     generar_texto_puntaje("Game Over", 50, (255, 255, 255), pantalla, ANCHO_PANTALLA // 2 - 100, ALTURA_PANTALLA // 2 - 80)
+
+    # Mostrar las opciones de reiniciar y salir
     generar_texto_puntaje("Presiona R para reiniciar", 30, (255, 255, 255), pantalla, ANCHO_PANTALLA // 2 - 130, ALTURA_PANTALLA // 2)
     generar_texto_puntaje("Presiona Q para salir", 30, (255, 255, 255), pantalla, ANCHO_PANTALLA // 2 - 110, ALTURA_PANTALLA // 2 + 40)
+    # Mostrar el puntaje final
+    generar_texto_puntaje(f'Puntaje final: {puntaje}', 30, (255, 255, 255), pantalla, ANCHO_PANTALLA // 2 - 100, ALTURA_PANTALLA // 2 + 80)
+    # Mostrar el puntaje más alto
+    generar_texto_puntaje(f'Puntaje más alto: {puntaje_alto}', 30, (255, 255, 255), pantalla, ANCHO_PANTALLA // 2 - 120, ALTURA_PANTALLA // 2 + 120)
+    # Actualizar la pantalla
     pygame.display.update()
 
     while True:
