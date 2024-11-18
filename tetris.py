@@ -1,8 +1,17 @@
 import pygame
 import random
-import sys 
+import sys
+import os 
 
 pygame.init()
+
+#RUTAS MULTIMEDIA
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+RUTA_IMAGEN = os.path.join(BASE_DIR, 'img', 'mi_imagen.jpg')
+RUTA_ROTATE_SOUND = os.path.join(BASE_DIR, 'sounds', 'rotate.wav')
+RUTA_CLEAR_SOUND = os.path.join(BASE_DIR, 'sounds', 'clear.wav')
+RUTA_GAMEOVER_SOUND = os.path.join(BASE_DIR, 'sounds', 'gameover.wav')
+
 
 # Configuración de pantalla y colores
 ANCHO_PANTALLA, ALTURA_PANTALLA = 600, 600
@@ -56,9 +65,9 @@ game_over_sound = None
 def cargar_sonidos():
     global rotate_sound, line_clear_sound, game_over_sound
     pygame.mixer.init()  # Inicializa el sistema de mezcla de sonidos
-    rotate_sound = pygame.mixer.Sound('C:/Users/Javee/OneDrive/Escritorio/tetrisgame/sounds/rotate.wav')
-    line_clear_sound = pygame.mixer.Sound('C:/Users/Javee/OneDrive/Escritorio/tetrisgame/sounds/clear.wav')
-    game_over_sound = pygame.mixer.Sound('C:/Users/Javee/OneDrive/Escritorio/tetrisgame/sounds/gameover.wav')
+    rotate_sound = pygame.mixer.Sound(RUTA_ROTATE_SOUND)
+    line_clear_sound = pygame.mixer.Sound(RUTA_CLEAR_SOUND)
+    game_over_sound = pygame.mixer.Sound(RUTA_GAMEOVER_SOUND)
     
 
 
@@ -363,10 +372,18 @@ pygame.display.set_caption('Vitris')
 
 
 try:
-    fondo = pygame.image.load('C:/Users/Javee/OneDrive/Escritorio/tetrisgame/img/mi_imagen.jpg')
+    fondo = pygame.image.load(RUTA_IMAGEN)
     fondo = pygame.transform.scale(fondo, (ANCHO_DE_JUEGO, ALTO_DE_JUEGO))
-except pygame.error:
+except pygame.error as e:
+    print(f"Error al cargar la imagen: {e}")
     fondo = None
+
+try:
+    rotate_sound = pygame.mixer.Sound(RUTA_ROTATE_SOUND)
+    line_clear_sound = pygame.mixer.Sound(RUTA_CLEAR_SOUND)
+    game_over_sound = pygame.mixer.Sound(RUTA_GAMEOVER_SOUND)
+except pygame.error as e:
+    print(f"Error al cargar sonidos: {e}")
 
 
 mostrar_menu_inicial(pantalla)
