@@ -60,13 +60,13 @@ PIEZAS_ESPECIALES = [
         ],
         "tipo": "limpiar_tablero",
     },
-    # Pieza con forma de J
+    # Pieza con forma de K
     {
         "shape": [
             [
                 [1, 0],
-                [1, 0],
-                [1, 1]
+                [1, 1],
+                [1, 0]
             ]
         ],
         "tipo": "borrar_linea",
