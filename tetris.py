@@ -49,14 +49,40 @@ PIEZAS = [
     [[1, 0, 0], [1, 1, 1]], [[0, 1], [0, 1], [1, 1]]]
 ]
 
+PIEZAS_ESPECIALES = [
+    # Pieza con forma de U
+    {
+        "shape": [
+            [
+                [1, 0, 1],
+                [1, 1, 1]
+            ]
+        ],
+        "tipo": "limpiar_tablero",
+    },
+    # Pieza con forma de J
+    {
+        "shape": [
+            [
+                [1, 0],
+                [1, 0],
+                [1, 1]
+            ]
+        ],
+        "tipo": "borrar_linea",
+    }
+]
+
+
 
 class Piece:
-    def __init__(self, x, y, shape):
+    def __init__(self, x, y, shape, tipo="regular"):
         self.x = x
         self.y = y
         self.shape = shape
-        self.color = random.choice(COLORES)
+        self.color = (255, 215, 0) if tipo == "limpiar_tablero" else (255, 69, 0) if tipo == "borrar_linea" else random.choice(COLORES)
         self.rotation = 0
+        self.tipo = tipo
 
 rotate_sound = None
 line_clear_sound = None
@@ -69,7 +95,21 @@ def cargar_sonidos():
     line_clear_sound = pygame.mixer.Sound(RUTA_CLEAR_SOUND)
     game_over_sound = pygame.mixer.Sound(RUTA_GAMEOVER_SOUND)
     
+def eliminar_linea_especifica(fila, locked):
+    """
+    Elimina una línea específica del tablero.
+    """
+    # Eliminar todas las posiciones bloqueadas de la línea
+    for x in range(10):  # Asumiendo un tablero de 10 columnas
+        if (x, fila) in locked:
+            del locked[(x, fila)]
 
+    # Mover hacia abajo todas las filas superiores
+    for pos in sorted(locked.keys(), key=lambda p: p[1], reverse=True):
+        x, y = pos
+        if y < fila:  # Solo mover las posiciones por encima de la línea eliminada
+            nueva_pos = (x, y + 1)
+            locked[nueva_pos] = locked.pop(pos)
 
 def iniciar_juego():
     cargar_sonidos()
@@ -147,16 +187,24 @@ def iniciar_juego():
                 for pos in shape_pos:
                     p = (pos[0], pos[1])
                     posiciones_bloqueadas[p] = pieza_actual.color
+
+                # Verificar si es una pieza especial
+                if pieza_actual.tipo == "limpiar_tablero":
+                    posiciones_bloqueadas = {}  # Vacía el tablero
+                elif pieza_actual.tipo == "borrar_linea":
+                    filas_tocadas = {y for _, y in shape_pos if y >= 0}
+                    for fila in filas_tocadas:
+                        eliminar_linea_especifica(fila, posiciones_bloqueadas)  
                 pieza_actual = pieza_siguiente
                 pieza_siguiente = generar_nueva_pieza()
                 cambio_de_pieza = False
                 puntaje += eliminar_linea_completa(grilla, posiciones_bloqueadas) * 10
-
+            
                 # Actualiza el puntaje más alto
                 if puntaje > puntaje_alto:
                     puntaje_alto = puntaje
                     guardar_puntaje_alto(puntaje_alto)
-
+            
         renderizar_ventana_de_juego(pantalla, grilla, puntaje, pieza_siguiente, puntaje_alto)
 
         if pausado:
@@ -232,8 +280,10 @@ def chequear_game_over(positions):
     return False
 
 def generar_nueva_pieza():
-    #return Piece(5, 0, [[[1, 1], [1, 1]]]) # /// SIEMPRE CUADRADO PARA DESARROLLO
-    return Piece(5, 0, random.choice(PIEZAS))  #/// PIEZAS RANDOM
+    if random.random() < 0.1:  # 10% de probabilidad de pieza especial
+        pieza_especial = random.choice(PIEZAS_ESPECIALES)
+        return Piece(5, 0, pieza_especial["shape"], pieza_especial["tipo"])
+    return Piece(5, 0, random.choice(PIEZAS))
 
 def generar_texto_puntaje(text, size, color, surface, x, y):
     font = pygame.font.Font(None, size)
