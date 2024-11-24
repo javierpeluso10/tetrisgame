@@ -5,7 +5,7 @@ a = Analysis(
     ['tetris.py'],
     pathex=[],
     binaries=[],
-    datas=[('img/mi_imagen.jpg', 'img'), ('sounds/*.wav', 'sounds')],
+    datas=[('img', 'img'), ('sounds', 'sounds')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
